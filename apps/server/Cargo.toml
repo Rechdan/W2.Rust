@@ -9,4 +9,4 @@ edition.workspace = true
 [dependencies]
 enc_dec = { path = "../../libs/enc_dec" }
 packets = { path = "../../libs/packets" }
-tokio = { version = "1.27.0", features = ["full"] }
+tokio = { version = "1.28.0", features = ["full"] }
