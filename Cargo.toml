@@ -10,7 +10,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.0.2"
+version = "0.0.3"
 authors = ["Nelson Faiçal Rechdan"]
 description = "W2.Rust is a set of tools and GameServer made using the Rust language."
 documentation = "https://github.com/Rechdan/W2.Rust"

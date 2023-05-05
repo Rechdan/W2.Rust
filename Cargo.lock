@@ -737,7 +737,7 @@ dependencies = [
 
 [[package]]
 name = "enc_dec"
-version = "0.0.2"
+version = "0.0.3"
 
 [[package]]
 name = "encoding_rs"
@@ -1221,7 +1221,7 @@ dependencies = [
 
 [[package]]
 name = "manager"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "eframe",
  "egui",
@@ -1798,7 +1798,7 @@ dependencies = [
 
 [[package]]
 name = "server"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "enc_dec",
  "packets",
@@ -1886,7 +1886,7 @@ dependencies = [
 
 [[package]]
 name = "sniffer"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "eframe",
  "egui",

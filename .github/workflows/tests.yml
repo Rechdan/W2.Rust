@@ -17,7 +17,8 @@ jobs:
       - name: Cache Rust
         uses: Swatinem/rust-cache@v2
         with:
-          prefix-key: "v0-w2rust"
+          prefix-key: "w2.rust"
+          shared-key: "w2.rust"
 
       - name: Check
         run: cargo check -r
@@ -35,7 +36,8 @@ jobs:
       - name: Cache Rust
         uses: Swatinem/rust-cache@v2
         with:
-          prefix-key: "v0-w2rust"
+          prefix-key: "w2.rust"
+          shared-key: "w2.rust"
 
       - name: Check
         run: cargo check -r
