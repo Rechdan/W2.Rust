@@ -1,0 +1,91 @@
+on:
+  push:
+    tags:
+      - "*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    name: Windows Release
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Prepare Rust
+        run: rustup toolchain install stable --profile minimal
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+        with:
+          prefix-key: "v0-w2rust"
+
+      - name: Build
+        run: cargo build -r
+
+      - name: Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-files.zip
+          path: |
+            target\release\manager.exe
+            target\release\server.exe
+            target\release\sniffer.exe
+
+  build-ubuntu:
+    name: Ubuntu Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Prepare Rust
+        run: rustup toolchain install stable --profile minimal
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+        with:
+          prefix-key: "v0-w2rust"
+
+      - name: Build
+        run: cargo build -r
+
+      - name: Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ubuntu-files.zip
+          path: |
+            target/release/manager
+            target/release/server
+            target/release/sniffer
+
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    needs: [build-windows, build-ubuntu]
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: windows-files.zip
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: ubuntu-files.zip
+
+      - name: Test Download
+        run: ls -al
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            manager.exe
+            server.exe
+            sniffer.exe
+            manager
+            server
+            sniffer

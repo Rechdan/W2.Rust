@@ -1,0 +1,15 @@
+[workspace]
+members = [
+    "apps/manager",
+    "apps/server",
+    "apps/sniffer",
+    "libs/enc_dec",
+    "libs/packets",
+]
+
+[workspace.package]
+version = "0.0.1"
+authors = ["Nelson Faiçal Rechdan"]
+description = "W2.Rust is a set of tools and GameServer made using the Rust language."
+documentation = ""
+edition = "2021"

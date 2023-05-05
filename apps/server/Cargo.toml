@@ -1,0 +1,12 @@
+[package]
+name = "server"
+version.workspace = true
+authors.workspace = true
+description.workspace = true
+documentation.workspace = true
+edition.workspace = true
+
+[dependencies]
+enc_dec = { path = "../../libs/enc_dec" }
+packets = { path = "../../libs/packets" }
+tokio = { version = "1.27.0", features = ["full"] }

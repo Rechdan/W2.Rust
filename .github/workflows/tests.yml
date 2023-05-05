@@ -1,0 +1,41 @@
+on:
+  push:
+    branches:
+      - "*"
+
+jobs:
+  check-windows:
+    name: Check Windows
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Prepare Rust
+        run: rustup toolchain install stable --profile minimal
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+        with:
+          prefix-key: "v0-w2rust"
+
+      - name: Check
+        run: cargo check -r
+
+  check-linux:
+    name: Check Linux
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Prepare Rust
+        run: rustup toolchain install stable --profile minimal
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+        with:
+          prefix-key: "v0-w2rust"
+
+      - name: Check
+        run: cargo check -r
