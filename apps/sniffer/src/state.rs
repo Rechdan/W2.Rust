@@ -51,15 +51,37 @@ impl State {
         conn.clone()
     }
 
+    pub fn remove_connection(&self, connection: Connection) {
+        connection.close();
+
+        match self.get_selected_connection() {
+            Some(selected_connection) => {
+                if selected_connection == connection {
+                    self.set_selected_connection(None);
+                }
+            }
+            None => {}
+        };
+
+        let mut connections = self.connections.blocking_lock();
+
+        match connections.iter().position(|c| c.clone() == connection) {
+            Some(index) => {
+                connections.remove(index);
+            }
+            None => {}
+        };
+    }
+
     // selected connection
 
     pub fn get_selected_connection(&self) -> Option<Connection> {
         self.selected_connection.blocking_lock().clone()
     }
 
-    pub fn set_selected_connection(&self, conn: Connection) {
+    pub fn set_selected_connection(&self, conn: Option<Connection>) {
         self.set_selected_packet(None);
-        *self.selected_connection.blocking_lock() = Some(conn.clone());
+        *self.selected_connection.blocking_lock() = conn.clone();
     }
 
     pub fn is_connection_selected(&self, conn: Connection) -> bool {
@@ -105,8 +127,6 @@ impl State {
             }
             _ => (),
         };
-
-        // *self.buffer_view.blocking_lock() = buffer_view;
     }
 
     // buffer view type

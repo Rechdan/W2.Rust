@@ -1,8 +1,7 @@
-use std::sync::Arc;
-
 use eframe::App;
-use egui::{style::Spacing, CentralPanel, ComboBox, ScrollArea, Ui, Vec2};
+use egui::{style::Spacing, CentralPanel, ComboBox, Frame, ScrollArea, Ui, Vec2};
 use egui_extras::{Size, StripBuilder};
+use std::sync::Arc;
 use tokio::sync::Mutex;
 
 use crate::{
@@ -12,26 +11,14 @@ use crate::{
     statics::STATE,
 };
 
-#[derive(Clone)]
+#[derive(Default, Clone)]
 pub struct MainWindow {
+    // heights
+    selected_connection_actions_height: Arc<Mutex<f32>>,
+    version_width: Arc<Mutex<f32>>,
     // form
     adding_connection: Arc<Mutex<bool>>,
     selected_ip: Arc<Mutex<String>>,
-}
-
-impl Default for MainWindow {
-    fn default() -> Self {
-        let new = Self {
-            adding_connection: Arc::new(Mutex::new(false)),
-            selected_ip: Arc::new(Mutex::new("".to_string())),
-        };
-
-        if cfg!(debug_assertions) {
-            let _conn = STATE.add_connections(new.selected_ip.blocking_lock().clone());
-        }
-
-        new
-    }
 }
 
 impl App for MainWindow {
@@ -52,6 +39,18 @@ impl App for MainWindow {
 }
 
 impl MainWindow {
+    // initialization
+
+    pub fn new() -> Self {
+        let new = Self::default();
+
+        if cfg!(debug_assertions) {
+            let _conn = STATE.add_connections(new.selected_ip.blocking_lock().clone());
+        }
+
+        new
+    }
+
     // ui
 
     fn principal(&mut self, ui: &mut Ui) {
@@ -64,16 +63,39 @@ impl MainWindow {
     }
 
     fn header(&mut self, ui: &mut Ui) {
+        let mw = self.clone();
+        let mut version_width = mw.version_width.blocking_lock();
+
         ui.horizontal(|ui| {
-            ui.horizontal_centered(|ui| {
-                ui.set_width(ui.available_width());
+            StripBuilder::new(ui)
+                .size(Size::remainder())
+                .size(Size::exact(version_width.clone()))
+                .horizontal(|mut strip| {
+                    strip.cell(|ui| {
+                        ui.horizontal(|ui| {
+                            ui.horizontal_centered(|ui| {
+                                ui.set_width(ui.available_width());
 
-                ui.heading("W2.Rust Sniffer");
+                                ui.heading("W2.Rust Sniffer");
 
-                ui.add_space(SPACE);
+                                ui.add_space(SPACE);
 
-                self.header_action(ui);
-            });
+                                self.header_action(ui);
+                            });
+                        });
+                    });
+
+                    strip.cell(|ui| {
+                        let curr_version_width = ui
+                            .label(format!("Versão {}", env!("CARGO_PKG_VERSION")))
+                            .rect
+                            .width();
+
+                        if version_width.clone() != curr_version_width {
+                            *version_width = curr_version_width;
+                        }
+                    });
+                });
         });
     }
 
@@ -82,7 +104,7 @@ impl MainWindow {
 
         if adding_connection {
             ui.add_enabled_ui(true, |ui| {
-                if ui.button("Go back").clicked() {
+                if ui.button("Voltar").clicked() {
                     *self.adding_connection.blocking_lock() = false;
                 }
             });
@@ -92,7 +114,7 @@ impl MainWindow {
             let enabled = !connections.iter().any(|c| c.is_new_connection_disabled());
 
             ui.add_enabled_ui(enabled, |ui| {
-                if ui.button("New connection").clicked() {
+                if ui.button("Nova conexão").clicked() {
                     *self.adding_connection.blocking_lock() = true;
                 }
             });
@@ -134,11 +156,11 @@ impl MainWindow {
             |s| s,
             |ui| {
                 ui.vertical(|ui| {
-                    ui.label("Adding new connection");
+                    ui.label("Adicionando uma nova conexão");
 
                     let selected_ip = self.selected_ip.blocking_lock().clone();
 
-                    ComboBox::new("ip_select", "Select an IP")
+                    ComboBox::new("ip_select", "Selecione um endereço de IP")
                         .selected_text(selected_ip.as_str())
                         .show_ui(ui, |ui| {
                             ui.set_width(200.0);
@@ -156,11 +178,11 @@ impl MainWindow {
                         });
 
                     ui.add_enabled_ui(selected_ip != "", |ui| {
-                        if ui.button("Add connection").clicked() {
+                        if ui.button("Adicionar conexão").clicked() {
                             let conn =
                                 STATE.add_connections(self.selected_ip.blocking_lock().clone());
 
-                            STATE.set_selected_connection(conn.clone());
+                            STATE.set_selected_connection(Some(conn.clone()));
 
                             *self.adding_connection.blocking_lock() = false;
                         }
@@ -171,6 +193,8 @@ impl MainWindow {
     }
 
     fn list_connections(&mut self, ui: &mut Ui) {
+        let mw = &mut self.clone();
+
         bordered_container(
             ui,
             |s| s,
@@ -179,30 +203,78 @@ impl MainWindow {
                     ui.set_width(ui.available_width());
                     ui.set_min_height(ui.available_height());
 
-                    ui.label("Connections");
+                    ui.label("Conexões");
 
-                    ScrollArea::vertical()
-                        .id_source("list_connections")
-                        .always_show_scroll(true)
-                        .auto_shrink([false, true])
-                        .show(ui, |ui| {
-                            ui.set_min_height(ui.available_height());
+                    match STATE.get_selected_connection() {
+                        Some(selected_connection) => {
+                            let mut selected_connection_actions_height =
+                                mw.selected_connection_actions_height.blocking_lock();
 
-                            let mut connections = STATE.get_connections();
+                            StripBuilder::new(ui)
+                                .size(Size::remainder())
+                                .size(Size::exact(selected_connection_actions_height.clone()))
+                                .vertical(|mut strip| {
+                                    strip.cell(|ui| {
+                                        self.list_connections_scroll(ui);
+                                    });
 
-                            connections.iter_mut().for_each(|conn| {
-                                let selected = STATE.is_connection_selected(conn.clone());
+                                    strip.cell(|ui| {
+                                        let rect_height = Frame::default()
+                                            .show(ui, |ui| {
+                                                bordered_container(
+                                                    ui,
+                                                    |s| s.set_fill_height(false),
+                                                    |ui| {
+                                                        selected_connection.render_actions(ui);
+                                                    },
+                                                );
+                                            })
+                                            .response
+                                            .rect
+                                            .height();
 
-                                let response = conn.render_list(ui, selected);
-
-                                if response.clicked() {
-                                    STATE.set_selected_connection(conn.clone());
-                                }
-                            });
-                        });
+                                        if selected_connection_actions_height.clone() != rect_height
+                                        {
+                                            *selected_connection_actions_height = rect_height;
+                                        }
+                                    });
+                                });
+                        }
+                        None => {
+                            StripBuilder::new(ui)
+                                .size(Size::remainder())
+                                .vertical(|mut strip| {
+                                    strip.cell(|ui| {
+                                        self.list_connections_scroll(ui);
+                                    });
+                                });
+                        }
+                    };
                 });
             },
         );
+    }
+
+    fn list_connections_scroll(&mut self, ui: &mut Ui) {
+        ScrollArea::vertical()
+            .id_source("list_connections")
+            .always_show_scroll(true)
+            .auto_shrink([false, true])
+            .show(ui, |ui| {
+                ui.set_min_height(ui.available_height());
+
+                let mut connections = STATE.get_connections();
+
+                connections.iter_mut().for_each(|conn| {
+                    let selected = STATE.is_connection_selected(conn.clone());
+
+                    let response = conn.render_list(ui, selected);
+
+                    if response.clicked() {
+                        STATE.set_selected_connection(Some(conn.clone()));
+                    }
+                });
+            });
     }
 
     fn list_packets(&mut self, ui: &mut Ui) {
@@ -214,7 +286,7 @@ impl MainWindow {
                     let selected_connection = STATE.get_selected_connection();
 
                     ui.label(format!(
-                        "Packets{}",
+                        "Pacotes{}",
                         match selected_connection.clone() {
                             Some(conn) => format!(": {}", conn.count_packets()),
                             _ => "".to_string(),
@@ -257,7 +329,7 @@ impl MainWindow {
 
     fn render_buffer_options(&self, ui: &mut Ui) {
         ui.horizontal(|ui: &mut Ui| {
-            ui.label("View type:");
+            ui.label("Tipo de exibição:");
 
             self.render_buffer_option(ui, BufferType::Byte, "Byte".to_string());
             self.render_buffer_option(ui, BufferType::Hex, "Hex".to_string());
@@ -290,7 +362,7 @@ impl MainWindow {
             |s| s,
             |ui| {
                 ui.vertical(|ui| {
-                    ui.label("Info");
+                    ui.label("Informações");
 
                     ScrollArea::vertical()
                         .id_source("list_information")

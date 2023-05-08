@@ -1,0 +1,13 @@
+[package]
+name = "editors"
+version.workspace = true
+authors.workspace = true
+description.workspace = true
+documentation.workspace = true
+edition.workspace = true
+
+[dependencies]
+eframe = "0.21.3"
+egui = "0.21.0"
+egui_extras = "0.21.0"
+once_cell = "1.17.1"

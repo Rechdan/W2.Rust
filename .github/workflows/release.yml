@@ -31,6 +31,7 @@ jobs:
         with:
           name: windows-files.zip
           path: |
+            target\release\editors.exe
             target\release\manager.exe
             target\release\server.exe
             target\release\sniffer.exe
@@ -59,6 +60,7 @@ jobs:
         with:
           name: ubuntu-files.zip
           path: |
+            target/release/editors
             target/release/manager
             target/release/server
             target/release/sniffer
@@ -85,9 +87,11 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
+            editors.exe
             manager.exe
             server.exe
             sniffer.exe
+            editors
             manager
             server
             sniffer

@@ -23,21 +23,21 @@ pub enum ConnectionState {
     WaitingRemote,
     Connection,
     Connected,
-    ConnectedNotStoringPackets,
+    PausedLogging,
     Closed,
 }
 
 impl Display for ConnectionState {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ConnectionState::WaitingLocal => write!(f, "Waiting Local"),
-            ConnectionState::WaitingRemote => write!(f, "Waiting Remote"),
-            ConnectionState::Connection => write!(f, "Connection"),
-            ConnectionState::Connected => write!(f, "Connected"),
-            ConnectionState::ConnectedNotStoringPackets => {
-                write!(f, "Connected, not storing packets")
+            ConnectionState::WaitingLocal => write!(f, "Aguardando local"),
+            ConnectionState::WaitingRemote => write!(f, "Aguardando remoto"),
+            ConnectionState::Connection => write!(f, "Aguardando conexão"),
+            ConnectionState::Connected => write!(f, "Conectado"),
+            ConnectionState::PausedLogging => {
+                write!(f, "Conectado, pausado")
             }
-            ConnectionState::Closed => write!(f, "Closed"),
+            ConnectionState::Closed => write!(f, "Fechado"),
         }
     }
 }
@@ -116,6 +116,14 @@ impl Connection {
         self.packets.blocking_lock().clone().len()
     }
 
+    pub fn close(&self) {
+        let mut state = self.state.blocking_lock();
+        match state.clone() {
+            ConnectionState::Closed => {}
+            _ => *state = ConnectionState::Closed,
+        }
+    }
+
     // private helpers
 
     fn begin_connection(&mut self) {
@@ -123,32 +131,64 @@ impl Connection {
 
         RT.spawn(async move {
             conn.accept_connection().await;
-            *conn.state.lock().await = ConnectionState::Closed;
+            match RT.spawn_blocking(move || conn.close()).await {
+                Ok(_) => {}
+                Err(_) => {}
+            }
         });
     }
 
     async fn add_packet(&mut self, direction: PacketDirection, buf: &mut Vec<u8>) {
         loop {
-            let size = u16::from_le_bytes([buf[0], buf[1]]) as usize;
+            match buf.get(0..2) {
+                Some(sizer_buf) => match TryInto::<[u8; 2]>::try_into(sizer_buf) {
+                    Ok(sizer_buf) => {
+                        let size = u16::from_le_bytes(sizer_buf) as usize;
 
-            if buf.len() < size {
-                break;
-            } else {
-                let packet_buf = &mut buf.clone()[0..size];
+                        if buf.len() < size {
+                            break;
+                        }
 
-                decode(packet_buf);
+                        let state = self.state.lock().await.clone();
 
-                let packet = Packet::new_async(direction.clone(), packet_buf.to_vec()).await;
+                        match state {
+                            ConnectionState::PausedLogging | ConnectionState::Closed => {}
 
-                let mut packets = self.packets.lock().await;
-                packets.push(packet);
+                            _ => {
+                                match buf.get_mut(0..size) {
+                                    Some(packet_buf) => {
+                                        decode(packet_buf);
 
-                *buf = buf.clone()[size..].to_vec();
+                                        let packet = Packet::new_async(
+                                            direction.clone(),
+                                            packet_buf.to_vec(),
+                                        )
+                                        .await;
 
-                if buf.len() < 2 {
-                    break;
-                }
-            }
+                                        let mut packets = self.packets.lock().await;
+                                        packets.push(packet);
+                                    }
+
+                                    None => break,
+                                };
+                            }
+                        };
+
+                        match buf.get(size..) {
+                            Some(new_buf) => {
+                                *buf = new_buf.to_vec();
+                            }
+                            None => {
+                                buf.clear();
+                            }
+                        }
+                    }
+
+                    Err(_) => break,
+                },
+
+                None => break,
+            };
         }
     }
 
@@ -164,8 +204,8 @@ impl Connection {
             selected,
             |s| s,
             |c| {
-                c.append(format!("Conn: {}", &conn.id), |rt| rt.monospace())
-                    .append(format!("State: {}", state), |rt| rt.monospace())
+                c.append(format!("ID: {}", &conn.id), |rt| rt.monospace())
+                    .append(format!("Estado: {}", state), |rt| rt.monospace())
             },
         );
 
@@ -191,13 +231,47 @@ impl Connection {
         });
     }
 
-    pub fn render_actions(&self, _ui: &mut Ui) {
-        let state = self.state.blocking_lock().clone();
+    pub fn render_actions(&self, ui: &mut Ui) {
+        ui.horizontal_wrapped(|ui| {
+            self.render_pause_resume_action(ui);
+            self.render_close_action(ui);
+            self.render_remove_action(ui);
+        });
+    }
 
+    fn render_pause_resume_action(&self, ui: &mut Ui) {
+        let mut state = self.state.blocking_lock();
+        match state.clone() {
+            ConnectionState::Connected => {
+                if ui.button("Pausar logs").clicked() {
+                    *state = ConnectionState::PausedLogging;
+                }
+            }
+            ConnectionState::PausedLogging => {
+                if ui.button("Resumir logs").clicked() {
+                    *state = ConnectionState::Connected;
+                }
+            }
+            _ => {}
+        }
+    }
+
+    fn render_close_action(&self, ui: &mut Ui) {
+        let state = self.state.blocking_lock().clone();
         match state {
-            ConnectionState::Connected | ConnectionState::ConnectedNotStoringPackets => {}
-            _ => (),
-        };
+            ConnectionState::Closed => {}
+            _ => {
+                if ui.button("Fechar").clicked() {
+                    self.close();
+                }
+            }
+        }
+    }
+
+    fn render_remove_action(&self, ui: &mut Ui) {
+        if ui.button("Remover").clicked() {
+            STATE.remove_connection(self.clone());
+        }
     }
 
     pub fn render_buffer_table(&self, ui: &mut Ui) {
@@ -220,38 +294,49 @@ impl Connection {
         let listener = TcpListener::bind("0.0.0.0:8281").await;
 
         match listener {
-            Ok(listener) => {
-                let stream = listener.accept().await;
+            Ok(listener) => loop {
+                let state = self.state.lock().await.clone();
 
-                match stream {
-                    Ok((stream, _addr)) => {
-                        let conn = self.clone();
+                match state {
+                    ConnectionState::Closed => break,
+                    _ => {}
+                };
 
-                        let (mut reader, mut writer) = (
-                            conn.local_reader.lock().await,
-                            conn.local_writer.lock().await,
-                        );
+                let timer = timeout(Duration::from_secs_f32(0.1), listener.accept()).await;
 
-                        let (reader2, writer2) = split(stream);
+                match timer {
+                    Ok(accept_result) => match accept_result {
+                        Ok((stream, _addr)) => {
+                            let conn = self.clone();
 
-                        *reader = Some(reader2);
-                        *writer = Some(writer2);
-                    }
-                    _ => {
-                        return;
-                    }
-                }
-            }
-            _ => {
-                return;
-            }
+                            let (mut reader, mut writer) = (
+                                conn.local_reader.lock().await,
+                                conn.local_writer.lock().await,
+                            );
+
+                            let (reader2, writer2) = split(stream);
+
+                            *reader = Some(reader2);
+                            *writer = Some(writer2);
+
+                            *self.state.lock().await = ConnectionState::WaitingRemote;
+
+                            break;
+                        }
+                        Err(_) => self.close(),
+                    },
+                    Err(_) => {}
+                };
+            },
+            Err(_) => self.close(),
+        };
+
+        let state = self.state.lock().await.clone();
+
+        match state {
+            ConnectionState::WaitingRemote => self.connect_to_remote().await,
+            _ => {}
         }
-
-        {
-            *self.state.lock().await = ConnectionState::WaitingRemote;
-        }
-
-        self.connect_to_remote().await;
     }
 
     async fn connect_to_remote(&mut self) {
@@ -281,9 +366,7 @@ impl Connection {
             _ => return,
         }
 
-        {
-            *self.state.lock().await = ConnectionState::Connection;
-        }
+        *self.state.lock().await = ConnectionState::Connection;
 
         let (mut conn1, mut conn2) = (self.clone(), self.clone());
 
@@ -304,21 +387,29 @@ impl Connection {
                 let mut persisted_buf: Vec<u8> = Vec::new();
 
                 loop {
+                    let state = self.state.lock().await.clone();
+
+                    match state {
+                        ConnectionState::Closed => break,
+                        _ => {}
+                    };
+
                     let mut buf = [0u8; 1024];
-                    let size = reader.read(&mut buf).await;
 
-                    match size {
-                        Ok(size) => {
-                            if size < 1 {
-                                break;
-                            } else {
-                                let mut buf = buf.to_vec();
-                                buf.truncate(size);
+                    let timer = timeout(Duration::from_secs_f32(0.1), reader.read(&mut buf)).await;
 
-                                let mut buf_to_persisted = buf.clone();
-                                persisted_buf.append(&mut buf_to_persisted);
+                    match timer {
+                        Ok(size_result) => match size_result {
+                            Ok(size) => {
+                                if size < 1 {
+                                    break;
+                                } else {
+                                    let mut buf = buf.to_vec();
+                                    buf.truncate(size);
 
-                                {
+                                    let mut buf_to_persisted = buf.clone();
+                                    persisted_buf.append(&mut buf_to_persisted);
+
                                     let mut writer = match source {
                                         DataSource::Local => self.remote_writer.lock().await,
                                         DataSource::Remote => self.local_writer.lock().await,
@@ -332,58 +423,63 @@ impl Connection {
                                             break;
                                         }
                                     }
-                                }
 
-                                let state = self.state.lock().await.clone();
+                                    let state = self.state.lock().await.clone();
 
-                                match state {
-                                    ConnectionState::Connection => {
-                                        {
-                                            *self.state.lock().await = ConnectionState::Connected;
+                                    match state {
+                                        ConnectionState::Connection => {
+                                            {
+                                                *self.state.lock().await =
+                                                    ConnectionState::Connected;
+                                            }
+
+                                            match size {
+                                                120 => {
+                                                    persisted_buf = persisted_buf[4..].to_vec();
+
+                                                    self.clone()
+                                                        .add_packet(
+                                                            PacketDirection::SND,
+                                                            &mut persisted_buf,
+                                                        )
+                                                        .await;
+                                                }
+                                                _ => (),
+                                            };
                                         }
 
-                                        match size {
-                                            120 => {
-                                                persisted_buf = persisted_buf[4..].to_vec();
+                                        ConnectionState::Connected
+                                        | ConnectionState::PausedLogging => {
+                                            match source {
+                                                DataSource::Local => {
+                                                    self.clone()
+                                                        .add_packet(
+                                                            PacketDirection::SND,
+                                                            &mut persisted_buf,
+                                                        )
+                                                        .await
+                                                }
+                                                DataSource::Remote => {
+                                                    self.clone()
+                                                        .add_packet(
+                                                            PacketDirection::RCV,
+                                                            &mut persisted_buf,
+                                                        )
+                                                        .await
+                                                }
+                                            };
+                                        }
 
-                                                self.clone()
-                                                    .add_packet(
-                                                        PacketDirection::SND,
-                                                        &mut persisted_buf,
-                                                    )
-                                                    .await;
-                                            }
-                                            _ => (),
-                                        };
-                                    }
-                                    ConnectionState::Connected => {
-                                        match source {
-                                            DataSource::Local => {
-                                                self.clone()
-                                                    .add_packet(
-                                                        PacketDirection::SND,
-                                                        &mut persisted_buf,
-                                                    )
-                                                    .await
-                                            }
-                                            DataSource::Remote => {
-                                                self.clone()
-                                                    .add_packet(
-                                                        PacketDirection::RCV,
-                                                        &mut persisted_buf,
-                                                    )
-                                                    .await
-                                            }
-                                        };
-                                    }
-                                    _ => (),
-                                };
+                                        _ => (),
+                                    };
+                                }
                             }
-                        }
-                        _ => {
-                            break;
-                        }
-                    }
+
+                            _ => break,
+                        },
+
+                        Err(_) => {}
+                    };
                 }
             }
             _ => (),

@@ -201,7 +201,7 @@ impl Packet {
             ui,
             |s| s.set_fill_height(false),
             |ui| {
-                ui.label(monospaced("Header information:".to_string()));
+                ui.label(monospaced("Informações do header:".to_string()));
 
                 bordered_container(
                     ui,
@@ -216,12 +216,12 @@ impl Packet {
                                 client_id,
                                 timestamp,
                             } => {
-                                ui.label(monospaced(format!("     Size: {:05}", size)));
-                                ui.label(monospaced(format!("      Key: {:03}", key)));
-                                ui.label(monospaced(format!(" CheckSum: {:03}", checksum)));
-                                ui.label(monospaced(format!("Packet ID: 0x{:04X}", packet_id)));
-                                ui.label(monospaced(format!("Client ID: {:05}", client_id)));
-                                ui.label(monospaced(format!("TimeStamp: {:010}", timestamp)));
+                                ui.label(monospaced(format!("     Size: {}", size)));
+                                ui.label(monospaced(format!("      Key: {}", key)));
+                                ui.label(monospaced(format!(" CheckSum: {}", checksum)));
+                                ui.label(monospaced(format!("Packet ID: 0x{:X}", packet_id)));
+                                ui.label(monospaced(format!("Client ID: {}", client_id)));
+                                ui.label(monospaced(format!("TimeStamp: {}", timestamp)));
                             }
                         };
                     },
@@ -237,7 +237,7 @@ impl Packet {
             |ui| {
                 let selected_index = self.selected_buffer_index.blocking_lock().clone();
 
-                ui.label(monospaced(format!("Selected index: {}", selected_index)));
+                ui.label(monospaced(format!("Index selecionado: {}", selected_index)));
 
                 bordered_container(
                     ui,

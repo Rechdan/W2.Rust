@@ -24,6 +24,6 @@ fn main() {
     let _app = eframe::run_native(
         "W2.Rust Sniffer",
         options,
-        Box::new(|_cc| Box::<MainWindow>::default()),
+        Box::new(|_cc| Box::<MainWindow>::new(MainWindow::new())),
     );
 }

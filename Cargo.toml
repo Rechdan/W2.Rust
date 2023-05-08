@@ -1,6 +1,8 @@
 [workspace]
 members = [
     # apps
+    "apps/editors",
+    # "apps/launcher",
     "apps/manager",
     "apps/server",
     "apps/sniffer",

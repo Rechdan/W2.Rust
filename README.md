@@ -9,6 +9,7 @@ Um conjunto de aplicativos para emular e gerenciar um servidor de W2.
 | [Server](#server)   | Emulador    | [apps/server](apps/server)   |
 | [Manager](#manager) | Gerenciador | [apps/manager](apps/manager) |
 | [Sniffer](#sniffer) | Ferramenta  | [apps/sniffer](apps/sniffer) |
+| [Editors](#editors) | Ferramenta  | [apps/editors](apps/editors) |
 
 ### Server
 
@@ -25,6 +26,12 @@ Usado para gerenciar o **Server**;
 Usado para interceptar pacotes enviados e recebidos do cliente do W2;
 
 ![Sniffer](pics/sniffer.png)
+
+### Editors
+
+Conjunto de editores do cliente do W2;
+
+![Editors](pics/editors.png)
 
 ## Bibliotecas
 
