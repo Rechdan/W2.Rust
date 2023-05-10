@@ -1,9 +1,12 @@
 [package]
 name = "editors"
 version.workspace = true
-authors.workspace = true
 description.workspace = true
+readme.workspace = true
+repository.workspace = true
+license.workspace = true
 documentation.workspace = true
+authors.workspace = true
 edition.workspace = true
 
 [dependencies]
