@@ -20,3 +20,9 @@ license = "MIT"
 documentation = "https://github.com/Rechdan/W2.Rust"
 authors = ["Nelson Faiçal Rechdan"]
 edition = "2021"
+
+[profile.release]
+strip = true
+opt-level = "z"
+lto = true
+codegen-units = 1
