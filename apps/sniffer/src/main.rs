@@ -9,15 +9,16 @@ pub mod packet;
 pub mod state;
 pub mod statics;
 
-use egui::vec2;
+use egui::{vec2, ViewportBuilder};
 use main_window::MainWindow;
 
 fn main() {
-    let app_size = Some(vec2(1240.0, 700.0));
-
     let options = eframe::NativeOptions {
-        initial_window_size: app_size,
-        min_window_size: app_size,
+        centered: true,
+        follow_system_theme: true,
+        viewport: ViewportBuilder::default()
+            .with_active(true)
+            .with_min_inner_size(vec2(1240.0, 700.0)),
         ..Default::default()
     };
 
