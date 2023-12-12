@@ -1,5 +1,8 @@
 use eframe::App;
-use egui::{style::Spacing, CentralPanel, ComboBox, Frame, ScrollArea, Ui, Vec2};
+use egui::{
+    scroll_area::ScrollBarVisibility, style::Spacing, CentralPanel, ComboBox, Frame, ScrollArea,
+    Ui, Vec2,
+};
 use egui_extras::{Size, StripBuilder};
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -258,7 +261,7 @@ impl MainWindow {
     fn list_connections_scroll(&mut self, ui: &mut Ui) {
         ScrollArea::vertical()
             .id_source("list_connections")
-            .always_show_scroll(true)
+            .scroll_bar_visibility(ScrollBarVisibility::AlwaysVisible)
             .auto_shrink([false, true])
             .show(ui, |ui| {
                 ui.set_min_height(ui.available_height());
@@ -295,7 +298,7 @@ impl MainWindow {
 
                     ScrollArea::vertical()
                         .id_source("list_packets")
-                        .always_show_scroll(true)
+                        .scroll_bar_visibility(ScrollBarVisibility::AlwaysVisible)
                         .auto_shrink([false, true])
                         .show(ui, |ui| {
                             ui.set_min_height(ui.available_height());
@@ -366,7 +369,7 @@ impl MainWindow {
 
                     ScrollArea::vertical()
                         .id_source("list_information")
-                        .always_show_scroll(true)
+                        .scroll_bar_visibility(ScrollBarVisibility::AlwaysVisible)
                         .auto_shrink([false, true])
                         .show(ui, |ui| {
                             ui.set_min_height(ui.available_height());

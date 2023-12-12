@@ -2,7 +2,6 @@
 members = [
     # apps
     "apps/editors",
-    # "apps/launcher",
     "apps/manager",
     "apps/server",
     "apps/sniffer",
@@ -11,8 +10,10 @@ members = [
     "libs/packets",
 ]
 
+resolver = "2"
+
 [workspace.package]
-version = "0.0.4"
+version = "0.0.5"
 description = "W2.Rust is a set of tools and GameServer made using the Rust language."
 readme = "README.md"
 repository = "https://github.com/Rechdan/W2.Rust"
