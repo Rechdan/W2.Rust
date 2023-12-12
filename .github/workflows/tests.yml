@@ -30,6 +30,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Install lib needed
+        run: sudo apt-get install -y librust-atk-dev
+
       - name: Prepare Rust
         run: rustup toolchain install stable --profile minimal
 
