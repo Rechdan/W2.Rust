@@ -30,11 +30,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Install lib needed
-        run: sudo apt-get install -y librust-atk-dev
+      # - name: Install lib needed
+      #   run: sudo apt-get install -y librust-atk-dev
 
-      - name: Prepare Rust
-        run: rustup toolchain install stable --profile minimal
+      # - name: Prepare Rust
+      #   run: rustup toolchain install stable --profile minimal
+
+      - name: Install minimal
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          profile: minimal
 
       - name: Cache Rust
         uses: Swatinem/rust-cache@v2
