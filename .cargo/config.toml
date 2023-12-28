@@ -11,7 +11,3 @@ dev-server-run = "run -q --bin server"
 
 dev-sniffer = "watch -qc -x dev-sniffer-run"
 dev-sniffer-run = "run -q --bin sniffer --target x86_64-pc-windows-gnu"
-
-[build]
-
-target = "x86_64-pc-windows-gnu"
