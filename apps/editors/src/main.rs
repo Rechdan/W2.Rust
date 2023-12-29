@@ -5,8 +5,9 @@ use egui::{vec2, ViewportBuilder};
 use main_window::MainWindow;
 
 pub mod consts;
-pub mod decoders;
 pub mod editors;
+pub mod enc_dec;
+pub mod get_file;
 pub mod main_window;
 pub mod structs;
 

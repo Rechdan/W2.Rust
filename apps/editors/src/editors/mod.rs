@@ -1,7 +1,7 @@
 use egui::{Button, ScrollArea, Ui};
 use egui_extras::{Size, StripBuilder};
 use rfd::FileDialog;
-use std::{fs::File, io::Read, path::PathBuf, sync::Mutex};
+use std::{path::PathBuf, sync::Mutex};
 
 use self::server_list::ServerListEditor;
 
@@ -32,14 +32,19 @@ impl Editors {
 
             None => {
                 if ui.button("Selecionar pasta do cliente").clicked() {
-                    match FileDialog::new().pick_folder() {
-                        Some(new_folder) => {
-                            *self.folder_selected.lock().unwrap() = Some(new_folder);
-                        }
-                        None => {}
-                    };
+                    self.pick_new_folder();
                 }
             }
+        };
+    }
+
+    fn pick_new_folder(&self) {
+        match FileDialog::new().pick_folder() {
+            Some(new_folder) => {
+                *self.folder_selected.lock().unwrap() = Some(new_folder);
+                *self.editor_selected.lock().unwrap() = EditorSelected::None;
+            }
+            None => {}
         };
     }
 
@@ -47,7 +52,9 @@ impl Editors {
         ui.horizontal(|ui| {
             ui.label("Pasta:");
 
-            if ui.link(folder.display().to_string()).clicked() {}
+            if ui.link(folder.display().to_string()).clicked() {
+                self.pick_new_folder();
+            }
         });
     }
 
@@ -93,34 +100,21 @@ impl Editors {
     }
 
     fn render_server_list_editor_button(&self, ui: &mut Ui, folder: PathBuf) {
-        let path = folder.join("serverlist.bin");
+        let mut editor_selected = self.editor_selected.lock().unwrap();
 
-        ui.add_enabled_ui(path.exists(), |ui| {
-            let mut editor_selected = self.editor_selected.lock().unwrap();
+        let selected = match *editor_selected {
+            EditorSelected::ServerList(_) => true,
+            _ => false,
+        };
 
-            let selected = match *editor_selected {
-                EditorSelected::ServerList(_) => true,
-                _ => false,
+        if ui
+            .add(Button::new("Server List + SN").selected(selected))
+            .clicked()
+        {
+            match ServerListEditor::new(folder.clone()) {
+                Some(server_list) => *editor_selected = EditorSelected::ServerList(server_list),
+                None => {}
             };
-
-            if ui
-                .add(Button::new("Server List").selected(selected))
-                .clicked()
-            {
-                let buf = &mut Vec::new();
-
-                match File::open(path).unwrap().read_to_end(buf) {
-                    Ok(_size) => match ServerListEditor::new(buf) {
-                        Some(server_list) => {
-                            *editor_selected = EditorSelected::ServerList(server_list);
-                        }
-
-                        None => {}
-                    },
-
-                    Err(_error) => {}
-                };
-            }
-        });
+        }
     }
 }
