@@ -6,9 +6,9 @@ use main_window::MainWindow;
 
 pub mod consts;
 pub mod editors;
-pub mod enc_dec;
-pub mod get_file;
+pub mod files;
 pub mod main_window;
+pub mod security;
 pub mod structs;
 
 fn main() {

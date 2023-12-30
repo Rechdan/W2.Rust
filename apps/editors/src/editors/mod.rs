@@ -1,4 +1,4 @@
-use egui::{Button, ScrollArea, Ui};
+use egui::{Button, Ui};
 use egui_extras::{Size, StripBuilder};
 use rfd::FileDialog;
 use std::{path::PathBuf, sync::Mutex};
@@ -75,19 +75,15 @@ impl Editors {
                     ui.group(|ui| {
                         ui.set_min_size(ui.available_size());
 
-                        ScrollArea::vertical()
-                            .id_source("editor_scroll")
-                            .show(ui, |ui| {
-                                match self.editor_selected.lock().unwrap().clone() {
-                                    EditorSelected::None => {
-                                        ui.label("Selecione um editor ao lado");
-                                    }
+                        match self.editor_selected.lock().unwrap().clone() {
+                            EditorSelected::None => {
+                                ui.label("Selecione um editor ao lado");
+                            }
 
-                                    EditorSelected::ServerList(server_list) => {
-                                        server_list.render(ui);
-                                    }
-                                };
-                            });
+                            EditorSelected::ServerList(server_list) => {
+                                server_list.render(ui);
+                            }
+                        };
                     });
                 });
             });
@@ -107,10 +103,9 @@ impl Editors {
             _ => false,
         };
 
-        if ui
-            .add(Button::new("Server List + SN").selected(selected))
-            .clicked()
-        {
+        let btn = ui.add(Button::new("Server List + SN").selected(selected));
+
+        if btn.clicked() && !selected {
             match ServerListEditor::new(folder.clone()) {
                 Some(server_list) => *editor_selected = EditorSelected::ServerList(server_list),
                 None => {}

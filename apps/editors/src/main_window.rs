@@ -22,26 +22,6 @@ impl App for MainWindow {
                 ui.heading("W2.Rust Editors");
 
                 self.editors.render(ui);
-
-                // match &mut self.state {
-                //     State::None => {
-                //         if ui.button("Selecionar pasta do cliente").clicked() {
-                //             match FileDialog::new().pick_folder() {
-                //                 Some(folder) => {
-                //                     self.state = State::ClientSelected(ClientSelected {
-                //                         path: folder,
-                //                         editor_selected: EditorSelected::None,
-                //                     });
-                //                 }
-                //                 None => {}
-                //             };
-                //         }
-                //     }
-
-                //     State::ClientSelected(client_selected) => {
-                //         client_selected.render(ui);
-                //     }
-                // }
             });
         });
     }
