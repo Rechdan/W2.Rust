@@ -4,7 +4,12 @@ use eframe::{run_native, NativeOptions};
 use egui::{vec2, ViewportBuilder};
 use main_window::MainWindow;
 
+pub mod consts;
+pub mod editors;
+pub mod files;
 pub mod main_window;
+pub mod security;
+pub mod structs;
 
 fn main() {
     let options = NativeOptions {

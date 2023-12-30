@@ -1,13 +1,13 @@
 [alias]
 
 dev-editors = "watch -qc -x dev-editors-run"
-dev-editors-run = "run -q --bin editors"
+dev-editors-run = "run -q --bin editors --target x86_64-pc-windows-gnu"
 
 dev-manager = "watch -qc -x dev-manager-run"
-dev-manager-run = "run -q --bin manager"
+dev-manager-run = "run -q --bin manager --target x86_64-pc-windows-gnu"
 
 dev-server = "watch -qc -x dev-server-run"
 dev-server-run = "run -q --bin server"
 
 dev-sniffer = "watch -qc -x dev-sniffer-run"
-dev-sniffer-run = "run -q --bin sniffer"
+dev-sniffer-run = "run -q --bin sniffer --target x86_64-pc-windows-gnu"

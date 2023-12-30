@@ -15,11 +15,11 @@ Um conjunto de aplicativos para emular e gerenciar um servidor de W2.
 
 Emulador do W2;
 
-### Manager
+### Editors
 
-Usado para gerenciar o **Server**;
+Conjunto de editores do cliente do W2;
 
-![Manager](pics/manager.png)
+![Editors](pics/editors.gif)
 
 ### Sniffer
 
@@ -27,11 +27,11 @@ Usado para interceptar pacotes enviados e recebidos do cliente do W2;
 
 ![Sniffer](pics/sniffer.png)
 
-### Editors
+### Manager
 
-Conjunto de editores do cliente do W2;
+Usado para gerenciar o **Server**;
 
-![Editors](pics/editors.png)
+![Manager](pics/manager.png)
 
 ## Bibliotecas
 
