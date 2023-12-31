@@ -815,7 +815,7 @@ dependencies = [
 
 [[package]]
 name = "editors"
-version = "0.0.6"
+version = "0.1.0"
 dependencies = [
  "eframe",
  "egui",
@@ -926,7 +926,7 @@ dependencies = [
 
 [[package]]
 name = "enc_dec"
-version = "0.0.6"
+version = "0.1.0"
 
 [[package]]
 name = "encoding_rs"
@@ -1630,7 +1630,7 @@ dependencies = [
 
 [[package]]
 name = "manager"
-version = "0.0.6"
+version = "0.1.0"
 dependencies = [
  "eframe",
  "egui",
@@ -1973,7 +1973,7 @@ dependencies = [
 
 [[package]]
 name = "packets"
-version = "0.0.6"
+version = "0.1.0"
 dependencies = [
  "encoding_rs",
 ]
@@ -2352,7 +2352,7 @@ dependencies = [
 
 [[package]]
 name = "server"
-version = "0.0.6"
+version = "0.1.0"
 dependencies = [
  "enc_dec",
  "packets",
@@ -2440,7 +2440,7 @@ dependencies = [
 
 [[package]]
 name = "sniffer"
-version = "0.0.6"
+version = "0.1.0"
 dependencies = [
  "eframe",
  "egui",
