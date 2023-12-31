@@ -1,5 +1,5 @@
 use eframe::{App, Frame};
-use egui::{Button, CentralPanel, Context, SidePanel, TopBottomPanel, Ui, Window};
+use egui::{Align, Button, CentralPanel, Context, Layout, SidePanel, TopBottomPanel, Ui, Window};
 use rfd::FileDialog;
 use std::path::PathBuf;
 
@@ -23,19 +23,53 @@ impl App for MainWindow {
 }
 
 impl MainWindow {
+    fn top_panel(&mut self, ctx: &Context, folder: Option<PathBuf>) {
+        TopBottomPanel::top("top_panel")
+            .resizable(false)
+            .exact_height(30.0)
+            .show(ctx, |ui| {
+                ui.horizontal_centered(|ui| {
+                    ui.heading("W2.Rust Editors");
+
+                    match folder {
+                        Some(folder) => {
+                            if ui.link(folder.display().to_string()).clicked() {
+                                self.pick_new_folder();
+                            }
+                        }
+
+                        None => {}
+                    }
+
+                    ui.allocate_ui_with_layout(
+                        ui.available_size(),
+                        Layout::right_to_left(Align::Center),
+                        |ui| {
+                            ui.hyperlink_to(
+                                format!("Versão: {}", env!("CARGO_PKG_VERSION")),
+                                "https://github.com/Rechdan/W2.Rust/releases/latest",
+                            );
+                        },
+                    );
+                });
+            });
+    }
+
     fn pick_new_folder(&mut self) {
         match FileDialog::new().pick_folder() {
             Some(new_folder) => {
                 self.client_folder = Some(new_folder);
+                self.server_list = None;
+                self.server_name = None;
             }
             None => {}
         };
     }
 
     fn folder_picker(&mut self, ctx: &Context) {
-        CentralPanel::default().show(ctx, |ui| {
-            ui.heading("W2.Rust Editors");
+        self.top_panel(ctx, None);
 
+        CentralPanel::default().show(ctx, |ui| {
             if ui.button("Selecionar pasta do cliente").clicked() {
                 self.pick_new_folder();
             }
@@ -43,14 +77,7 @@ impl MainWindow {
     }
 
     fn main_view(&mut self, ctx: &Context, folder: PathBuf) {
-        TopBottomPanel::top("top_panel")
-            .resizable(false)
-            .exact_height(30.0)
-            .show(ctx, |ui| {
-                ui.horizontal_centered(|ui| {
-                    ui.heading("W2.Rust Editors");
-                });
-            });
+        self.top_panel(ctx, Some(folder.clone()));
 
         SidePanel::left("left_panel")
             .resizable(false)
