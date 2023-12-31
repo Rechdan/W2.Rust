@@ -13,7 +13,7 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version = "0.1.0"
+version = "0.1.1"
 description = "W2.Rust is a set of tools and GameServer made using the Rust language."
 readme = "README.md"
 repository = "https://github.com/Rechdan/W2.Rust"
