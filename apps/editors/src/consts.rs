@@ -1,12 +1,14 @@
 use std::mem::size_of;
 
-use crate::structs::{ServerList, ServerName};
+use crate::structs::{server_list::ServerList, server_name::ServerName, strdef::Strdef};
+
+pub const LANGS_FOLDER: &str = "Lang";
 
 pub const SERVER_LIST_FILE: &str = "serverlist.bin";
 pub const SERVER_NAME_FILE: &str = "sn.bin";
+pub const STRDEF_FILE: &str = "strdef.bin";
 
 pub const SERVER_LIST_KEY_LEN: usize = 63;
-
 pub const SERVER_LIST_KEY: [u8; SERVER_LIST_KEY_LEN] = [
     0xc1, 0xb6, 0xc0, 0xcc, 0xc0, 0xd3, 0xc6, 0xd1, 0xc6, 0xae, 0xbe, 0xcf, 0xc8, 0xa3, 0xc8, 0xad,
     0xc0, 0xdb, 0xbe, 0xf7, 0xc0, 0xbb, 0xc0, 0xa7, 0xc7, 0xd1, 0xbd, 0xba, 0xc5, 0xa9, 0xb8, 0xb3,
@@ -14,5 +16,8 @@ pub const SERVER_LIST_KEY: [u8; SERVER_LIST_KEY_LEN] = [
     0xbe, 0xcf, 0xc8, 0xad, 0xc8, 0xad, 0xc7, 0xd2, 0xc1, 0xd9, 0xa4, 0xbb, 0xa4, 0xbb, 0x00,
 ];
 
+pub const STRDEF_MESSAGES_LEN: usize = 2000;
+
 pub const SERVER_LIST_SIZE: usize = size_of::<ServerList>();
 pub const SERVER_NAME_SIZE: usize = size_of::<ServerName>();
+pub const STRDEF_SIZE: usize = size_of::<Strdef>();

@@ -2,7 +2,7 @@ use egui::Ui;
 use fixedstr::zstr;
 use std::{path::PathBuf, str::FromStr};
 
-use crate::structs::ServerName;
+use crate::structs::server_name::ServerName;
 
 use super::EditorRender;
 

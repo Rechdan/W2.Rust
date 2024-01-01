@@ -1,29 +1,34 @@
 use eframe::{App, Frame};
-use egui::{Align, Button, CentralPanel, Context, Layout, SidePanel, TopBottomPanel, Ui, Window};
+use egui::{Align, CentralPanel, Context, Layout, TopBottomPanel};
 use rfd::FileDialog;
-use std::path::PathBuf;
 
-use crate::editors::{server_list::ServerListEditor, server_name::ServerNameEditor, EditorRender};
+use crate::editors::Editors;
 
 #[derive(Default)]
 pub struct MainWindow {
-    client_folder: Option<PathBuf>,
-
-    server_list: Option<(bool, Box<ServerListEditor>)>,
-    server_name: Option<(bool, Box<ServerNameEditor>)>,
+    editors: Option<Box<Editors>>,
 }
 
 impl App for MainWindow {
     fn update(&mut self, ctx: &Context, _frame: &mut Frame) {
-        match self.client_folder.clone() {
-            Some(folder) => self.main_view(ctx, folder),
-            None => self.folder_picker(ctx),
+        match self.editors.is_some() {
+            true => self.editors_render(ctx),
+            false => self.folder_picker(ctx),
         }
     }
 }
 
 impl MainWindow {
-    fn top_panel(&mut self, ctx: &Context, folder: Option<PathBuf>) {
+    fn pick_new_folder(&mut self) {
+        match FileDialog::new().pick_folder() {
+            Some(new_folder) => {
+                self.editors = Some(Box::new(Editors::new(new_folder)));
+            }
+            None => {}
+        };
+    }
+
+    fn top_panel(&mut self, ctx: &Context) {
         TopBottomPanel::top("top_panel")
             .resizable(false)
             .exact_height(30.0)
@@ -31,9 +36,12 @@ impl MainWindow {
                 ui.horizontal_centered(|ui| {
                     ui.heading("W2.Rust Editors");
 
-                    match folder {
-                        Some(folder) => {
-                            if ui.link(folder.display().to_string()).clicked() {
+                    match &self.editors {
+                        Some(editors) => {
+                            if ui
+                                .link(editors.get_client_folder().display().to_string())
+                                .clicked()
+                            {
                                 self.pick_new_folder();
                             }
                         }
@@ -55,19 +63,8 @@ impl MainWindow {
             });
     }
 
-    fn pick_new_folder(&mut self) {
-        match FileDialog::new().pick_folder() {
-            Some(new_folder) => {
-                self.client_folder = Some(new_folder);
-                self.server_list = None;
-                self.server_name = None;
-            }
-            None => {}
-        };
-    }
-
     fn folder_picker(&mut self, ctx: &Context) {
-        self.top_panel(ctx, None);
+        self.top_panel(ctx);
 
         CentralPanel::default().show(ctx, |ui| {
             if ui.button("Selecionar pasta do cliente").clicked() {
@@ -76,53 +73,8 @@ impl MainWindow {
         });
     }
 
-    fn main_view(&mut self, ctx: &Context, folder: PathBuf) {
-        self.top_panel(ctx, Some(folder.clone()));
-
-        SidePanel::left("left_panel")
-            .resizable(false)
-            .exact_width(150.0)
-            .show(ctx, |ui| {
-                ui.vertical_centered_justified(|ui| {
-                    Self::manage_editor_btn(&mut self.server_list, ui, folder.clone());
-                    Self::manage_editor_btn(&mut self.server_name, ui, folder.clone());
-                });
-            });
-
-        Self::manage_window(&mut self.server_list, ctx);
-        Self::manage_window(&mut self.server_name, ctx);
-    }
-
-    fn manage_window<T: EditorRender>(editor: &mut Option<(bool, Box<T>)>, ctx: &Context) {
-        match editor {
-            Some((open, editor)) => {
-                Window::new(T::name())
-                    .resizable(false)
-                    .open(open)
-                    .show(ctx, |ui| {
-                        editor.render(ui);
-                    });
-            }
-            None => {}
-        };
-    }
-
-    fn manage_editor_btn<T: EditorRender>(
-        editor: &mut Option<(bool, Box<T>)>,
-        ui: &mut Ui,
-        folder: PathBuf,
-    ) {
-        if ui
-            .add(Button::new(T::name()).selected(editor.as_ref().is_some_and(|(open, _)| *open)))
-            .clicked()
-        {
-            match editor {
-                Some((open, _)) => *open = !*open,
-                None => match T::new(folder) {
-                    Some(new_editor) => *editor = Some((true, new_editor)),
-                    None => {}
-                },
-            };
-        }
+    fn editors_render(&mut self, ctx: &Context) {
+        self.top_panel(ctx);
+        self.editors.as_mut().unwrap().render(ctx);
     }
 }
