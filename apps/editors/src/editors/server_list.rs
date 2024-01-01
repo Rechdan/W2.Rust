@@ -2,7 +2,7 @@ use egui::{Button, Ui};
 use fixedstr::zstr;
 use std::{path::PathBuf, str::FromStr};
 
-use crate::structs::ServerList;
+use crate::structs::server_list::ServerList;
 
 use super::EditorRender;
 

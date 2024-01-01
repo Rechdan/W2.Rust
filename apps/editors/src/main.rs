@@ -6,6 +6,7 @@ use main_window::MainWindow;
 
 pub mod consts;
 pub mod editors;
+pub mod encodings;
 pub mod files;
 pub mod main_window;
 pub mod security;
