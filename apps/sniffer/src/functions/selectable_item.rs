@@ -1,6 +1,4 @@
-use egui::{
-    vec2, widget_text::WidgetTextGalley, Response, RichText, Sense, TextStyle, Ui, Vec2, WidgetText,
-};
+use egui::{vec2, Response, RichText, Sense, TextStyle, Ui, Vec2, WidgetText};
 
 use crate::consts::SPACE;
 
@@ -87,7 +85,7 @@ pub fn selectable_item(
         .map(|i| {
             WidgetText::RichText(i.clone()).into_galley(ui, None, content_width, TextStyle::Button)
         })
-        .collect::<Vec<WidgetTextGalley>>();
+        .collect::<Vec<_>>();
 
     if !settings.fill_width {
         let mut max_width = 0f32;
@@ -133,11 +131,13 @@ pub fn selectable_item(
 
         text_pos += button_padding;
 
-        content.iter().for_each(|i| {
-            i.clone()
-                .paint_with_visuals(ui.painter(), text_pos, &visuals);
+        content.iter().for_each(|item| {
+            // item.clone().paint_with_visuals(ui.painter(), text_pos, &visuals);
 
-            text_pos.y += i.clone().size().y + SPACE;
+            ui.painter()
+                .galley(text_pos, item.clone(), visuals.text_color());
+
+            text_pos.y += item.clone().size().y + SPACE;
         });
     }
 

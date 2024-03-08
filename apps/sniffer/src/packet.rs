@@ -151,7 +151,9 @@ impl Packet {
                 }
             })
             .body(|body| {
-                body.rows(20.0, total_rows, |i, mut row| {
+                body.rows(20.0, total_rows, |mut row| {
+                    let i = row.index();
+
                     row.col(|ui| {
                         ui.centered_and_justified(|ui| {
                             ui.label(
